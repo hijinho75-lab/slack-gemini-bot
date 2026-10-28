@@ -1,0 +1,2 @@
+slack-bolt>=1.20.0
+google-genai>=0.1.0
