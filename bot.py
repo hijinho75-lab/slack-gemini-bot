@@ -1,9 +1,26 @@
 import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from google import genai
 
-# 환경 변수에서 키 값을 안전하게 불러옵니다
+# 1. Render 무료 웹 서비스 유지용 가짜 웹서버 (포트 바인딩)
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Slack Bot is running healthy!")
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    server.serve_forever()
+
+# 백그라운드 스레드로 포트 10000 오픈
+threading.Thread(target=run_web_server, daemon=True).start()
+
+# 2. 슬랙 봇 및 Gemini 연동
 SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.environ.get("SLACK_APP_TOKEN")
 GEMINI_API_KEY  = os.environ.get("GEMINI_API_KEY")
